@@ -1,7 +1,7 @@
 ---
-title: "Task 3"
+title: "Assignment 2 - Task 3"
 author: "Amelia Ritger"
-date: "2/13/2020"
+date: "2/14/2020"
 output: html_document
 ---
 
@@ -24,56 +24,58 @@ library(paletteer)
 library(ggspatial)
 ```
 
-My task?
+Here I will be mapping the watersheds for the main Hawaiian Islands, and zooming in on the main island of Hawaii. What is a watershed, you ask? [Here's a nice article](https://dlnr.hawaii.gov/ecosystems/wpp/learn/) to learn about the watersheds around the Hawaiian Islands.
 
-Make finalized map(s) in which I: 
+Watershed Partnerships of the Hawaiian Islands
+[(Source)](https://dlnr.hawaii.gov/ecosystems/wpp/partnerships/)
+![](watershed.png)
 
-- Clearly and professionally show the different watersheds for all main Hawaiian islands, or for an island or region of my choosing
+The data for this project was last updated in 2017. Curious where the data for this project comes from? [Look no further!](http://geoportal.hawaii.gov/datasets/watersheds)
 
-Do you want your maps to be static or interactive?
-What areas do you want to focus on? 
-Do you want to show land use/landcover and watersheds in a single map or in separate maps? 
-Just make sure that your final outputs are presented in a nice professional HTML that you’d be proud to share with someone so that they can see your awesome spatial code! 
+### Let's get cracking!
 
-Let's get cracking!
-
-Read in data
+Read in data:
 ```{r}
 water <- read_sf(here("Watersheds", "Watersheds.shp"))
 ```
 
-Basically plot it
+Basically, plot it:
 ```{r}
 plot(water)
 ```
 
-Unfortunately, swma (water management area) doesn't look very interesting...
-"wuc" (watershed unit code text) and "huc" (watershed unit code numeric) also don't look too interesting
+Unfortunately, swma (water management area) doesn't look very interesting (i.e. diverse)...
+"wuc" (watershed unit code text) and "huc" (watershed unit code numeric) also don't look too interesting. So let's plot hucarea (watershed area)!
 
-Check on other map related things and map it!
+Prepare map related things:
 ```{r}
 st_crs(water) #cool, EPSG is 4326, as it should be
 
 #Rename variable of interest in the name of good-looking maps
 water <- water %>% 
   mutate(`Watershed Area (sq m)`= hucarea)
+```
 
+### Make a cool looking interactive map!
+```{r}
 water_map <- ggplot(data=water) +
   geom_sf(aes(fill=`Watershed Area (sq m)`), show.legend = FALSE, size=0.1) +
-  scale_fill_paletteer_c("scico::hawaii", direction=-1) +
+  scale_fill_paletteer_c("scico::hawaii", direction=-1) + #use Hawaii color scheme
   ggtitle("Watersheds of the Hawaiian Islands") +
   xlab("Longitude") +
   ylab("Latitude") +
   theme(panel.grid.major = element_line(color = "gray"(0.5), linetype = "dashed", size = 0.5),
         panel.background = element_rect(fill = "aliceblue"))
 
+#make it interactive!
 ggplotly(water_map) %>%
-  highlight(
-    "plotly_hover",
-    selected = attrs_selected(line = list(color = "black")))
+  highlight( "plotly_hover",
+             selected = attrs_selected(line = list(color = "black")))
 ```
 
-This plot allows us to zoom in to each of the islands. But maybe proof of concept? Next, let's zoom in on just the main island
+This super-cool interactive map allows us to zoom in to each of the islands and more clearly visualize the areas (in square meters) of each watershed on the Hawaiian Islands. 
+
+As a proof of concept, let's zoom in on just the main island!
 ```{r}
 library(scales)
 
@@ -84,7 +86,7 @@ ggplot(data=water) +
   annotation_scale(location = "br", width_hint = 0.3) + #add a scale bar
   annotation_north_arrow(location = "br", which_north = "true",
                          pad_x = unit(0.3,"in"), pad_y = unit(0.3, "in"),
-                         style = north_arrow_fancy_orienteering) +
+                         style = north_arrow_fancy_orienteering) + #add compass
   ggtitle("Watersheds of Hawaii, HI") +
   xlab("Longitude") +
   ylab("Latitude") +
@@ -92,3 +94,4 @@ ggplot(data=water) +
         panel.background = element_rect(fill = "aliceblue"))
 ```
 
+This beautiful looking map shows us the delineations between each of the watersheds on Hawaii, as well as the area (in square meters) of each watershed (color-coded with a Hawaiian theme).
