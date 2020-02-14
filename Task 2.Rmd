@@ -30,24 +30,16 @@ raw_fish <- read_csv("cbr_fish_passage_bonneville_allyrs_steelhead.csv") %>%
 
 Tidy the data
 ```{r}
-Sys.setlocale("LC_TIME", "en_US.UTF-8")
-
 fish <- raw_fish %>%
   #drop_na(value) %>% #drop NA values
-  filter(value>=0) %>% #drop negative values because metadata doesn't explain what they mean
-  #mutate(value = replace_na(value, "0")) %>% 
+  #filter(value>=0) %>% #drop negative values because metadata doesn't explain what they mean
   separate(mm_dd, into=c("day", "month")) %>% #separate out month and day
-  mutate(ignore = as.Date(iconv(paste("01", month, "1800", sep=""), 
-                  from='UTF-8', to='latin1'), "%d%b%Y"),
-         day = sprintf("%02d",as.numeric(day)),
-         month_number = as.numeric(lubridate::month(ignore)),
-         month = month.abb[month_number], #utilize month.abb function, built into base R
-         yr_mo = paste(year, month, sep="-"), #combine year and month columns and separate by -
-         yr_mo_day = paste(year, month_number, day, sep="-"), #combine all date columns and separate by -
-         date = as.Date(yr_mo_day), #tell R this is a date
-         year_month = tsibble::yearmonth(yr_mo)) %>% #tell R this is a date
-  select("year", "year_month", "date", "value") #remove unnecessary variables
-
+  mutate(yr_mo_day = paste(year, match(month,month.abb), day, sep="-"), #combine all date columns and separate by -
+         yr_mo = paste(year, match(month,month.abb), sep="-"),
+         date = as.Date(yr_mo_day)) %>% #tell R this is a date
+  filter(!is.na(date)) %>% #REMOVE DARN LEAP YEAR DATES (Feb 29th)
+  mutate(year_month = tsibble::yearmonth(yr_mo_day)) %>% #tell R this is a date
+  select("year", "year_month", "yr_mo", "date", "value") #remove unnecessary variables
 ```
 
 ### Look at the data day-by-day (original time series observations)
@@ -68,10 +60,10 @@ ggplot(data=fish_trimmed, aes(x=date, y=value)) +
 
 Look at the data month-by-month
 ```{r}
-#fish_month <- ggplot(data=fish, aes(x=year_month, y=value)) +
-#  geom_line()
+fish_month <- ggplot(data=fish, aes(x=year_month, y=value)) +
+  geom_line()
 
-#fish_month
+fish_month
 ```
 
 Look at the data year-by-year
@@ -85,7 +77,9 @@ fish_yr
 ### Make a season plot
 ```{r}
 #Coerce dataframe to a tsibble
-fish_ts <- as_tsibble(fish, index= yr_mo)
+fish_ts <- as_tsibble(fish, index= year_month)
+
+duplicates(fish, index=year_month)
 
 #plot tsibble fancy plots
 fish_ts %>% autoplot(value)
@@ -95,9 +89,10 @@ fish_ts %>% gg_subseries(value)
 fish_summary <- fish %>% 
   group_by(yr_mo) %>%
   summarise(sums=sum(value)) %>% 
-  mutate(year_month = tsibble::yearmonth(yr_mo)) %>% #tell R this is a date
-  mutate(month = month(year_month, label = TRUE)) %>% 
-  mutate(year = year(year_month))
+  mutate(year_month = tsibble::yearmonth(yr_mo), #tell R this is a date
+         month = month(year_month, label = TRUE),
+         year = year(year_month),
+         sums=replace_na(sums, 0)) #replace NA values with 0
 
 #coerce data frame into a tsibble
 fish_summary_ts <- as_tsibble(fish_summary, index= year_month) %>% 
@@ -114,12 +109,12 @@ ggplot(data=fish_summary, aes(x=month, y=sums, group=year)) +
 Visualize annual steelhead passage counts
 ```{r}
 #prep data frame for annual counts plot
-fish_annual <- fish %>% 
+fish_annual <- fish_summary %>% 
   group_by(year) %>% 
-  summarize(sums=sum(value))
+  summarize(sumsofsums=sum(sums))
 
 #plot it
-ggplot(data=fish_annual, aes(x=year, y=sums)) +
+ggplot(data=fish_annual, aes(x=year, y=sumsofsums)) +
   geom_line()
 ```
 
