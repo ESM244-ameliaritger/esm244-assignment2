@@ -44,10 +44,15 @@ fish <- raw_fish %>%
          month = as.numeric(lubridate::month(ignore)),
          month_name = month.abb[month]) %>% # utilize month.abb function, built into base R
   mutate(yr_mo_day = paste(year, month, day, sep="-")) %>% #combine all date columns and separate by -
-  mutate(yr_mo = paste(year, month, sep="-")) %>% #combine all date columns and separate by -
-  mutate(date = as.Date(yr_mo_day, format="%Y-%m-%d")) %>% #tell R this is a date
-  mutate(year_month = tsibble::yearmonth(yr_mo_day)) %>% #tell R this is a date
-  select("year", "yr_mo", "date", "value") #remove unnecessary variables
+  mutate(yr_mo = paste(year, month, sep="-")) %>%  #combine all date columns and separate by -
+  #mutate(date = as.Date(yr_mo_day, format="%Y-%m-%d"))
+  #mutate(date = with(fish, ymd(paste(year, month, day, sep= ' ')))) #tell R this is a date
+  mutate(year_month = tsibble::yearmonth(yr_mo)) %>% #tell R this is a date
+  select("year", "year_month", "value") #remove unnecessary variables
+
+
+pd.to_datetime(fish[['year', 'month', 'day']])
+
 ```
 
 ### Look at the data day-by-day (original time series observations)
