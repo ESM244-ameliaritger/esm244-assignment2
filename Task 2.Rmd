@@ -34,24 +34,19 @@ Sys.setlocale("LC_TIME", "en_US.UTF-8")
 
 fish <- raw_fish %>%
   #drop_na(value) %>% #drop NA values
-  #filter(value>=0) %>% #drop negative values because metadata doesn't explain what they mean
-  mutate(value = replace_na(value, "0")) %>% 
-  #as.Date(mm_dd, format="%d-%b")
+  filter(value>=0) %>% #drop negative values because metadata doesn't explain what they mean
+  #mutate(value = replace_na(value, "0")) %>% 
   separate(mm_dd, into=c("day", "month")) %>% #separate out month and day
-  mutate(day = sprintf("%02d",as.numeric(day))) %>% 
   mutate(ignore = as.Date(iconv(paste("01", month, "1800", sep=""), 
                   from='UTF-8', to='latin1'), "%d%b%Y"),
-         month = as.numeric(lubridate::month(ignore)),
-         month_name = month.abb[month]) %>% # utilize month.abb function, built into base R
-  mutate(yr_mo_day = paste(year, month, day, sep="-")) %>% #combine all date columns and separate by -
-  mutate(yr_mo = paste(year, month, sep="-")) %>%  #combine all date columns and separate by -
-  #mutate(date = as.Date(yr_mo_day, format="%Y-%m-%d"))
-  #mutate(date = with(fish, ymd(paste(year, month, day, sep= ' ')))) #tell R this is a date
-  mutate(year_month = tsibble::yearmonth(yr_mo)) %>% #tell R this is a date
-  select("year", "year_month", "value") #remove unnecessary variables
-
-
-pd.to_datetime(fish[['year', 'month', 'day']])
+         day = sprintf("%02d",as.numeric(day)),
+         month_number = as.numeric(lubridate::month(ignore)),
+         month = month.abb[month_number], #utilize month.abb function, built into base R
+         yr_mo = paste(year, month, sep="-"), #combine year and month columns and separate by -
+         yr_mo_day = paste(year, month_number, day, sep="-"), #combine all date columns and separate by -
+         date = as.Date(yr_mo_day), #tell R this is a date
+         year_month = tsibble::yearmonth(yr_mo)) %>% #tell R this is a date
+  select("year", "year_month", "date", "value") #remove unnecessary variables
 
 ```
 
