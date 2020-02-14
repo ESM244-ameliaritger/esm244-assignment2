@@ -12,9 +12,18 @@ knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ## Here's a useful and descriptive introductory summary! 
 Curious where the data comes from? [Look no further!](http://www.cbr.washington.edu/dart/query/adult_graph_text)
 
-## Here's an image of a steelhead or the Bonneville Dam!
+### Here's an image of a steelhead trout! 
 
-## Now let's get into the code! 
+[(Photo by Visitor7)](https://en.wikipedia.org/wiki/Bonneville_Dam)
+
+![](trout.png)
+
+### And here's an image of the Bonneville Dam! 
+
+(Photo by Duane Raver)
+![](bonneville.jpg)
+
+## Now let's get into the code!
 
 Load necessary packages and data
 ```{r}
@@ -52,7 +61,7 @@ fish_day
 
 Double check you did it right by looking at the first 1000 observations
 ```{r}
-fish_trimmed <- tail(fish, n=500)
+fish_trimmed <- tail(fish, n=1000)
 
 ggplot(data=fish_trimmed, aes(x=date, y=value)) +
   geom_line()
@@ -84,7 +93,11 @@ duplicates(fish, index=year_month)
 #plot tsibble fancy plots
 fish_ts %>% autoplot(value)
 fish_ts %>% gg_subseries(value)
+```
 
+Check out that sweet trout spawning season!
+
+```{r}
 #prep data frame for season plot
 fish_summary <- fish %>% 
   group_by(yr_mo) %>%
@@ -106,7 +119,7 @@ ggplot(data=fish_summary, aes(x=month, y=sums, group=year)) +
   geom_line(aes(color=year))
 ```
 
-Visualize annual steelhead passage counts
+### Visualize annual steelhead passage counts
 ```{r}
 #prep data frame for annual counts plot
 fish_annual <- fish_summary %>% 
