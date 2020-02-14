@@ -21,6 +21,7 @@ library(gstat)
 
 library(plotly)
 library(paletteer)
+library(ggspatial)
 ```
 
 My task?
@@ -58,10 +59,9 @@ water <- water %>%
   mutate(`Watershed Area (sq m)`= hucarea)
 
 water_map <- ggplot(data=water) +
-  geom_sf(aes(fill=`Watershed Area (sq m)`, color=`Watershed Area (sq m)`), show.legend = FALSE) +
+  geom_sf(aes(fill=`Watershed Area (sq m)`), show.legend = FALSE, size=0.1) +
   scale_fill_paletteer_c("scico::hawaii", direction=-1) +
-  scale_color_paletteer_c("scico::hawaii", direction=-1) +
-  ggtitle("Map of the watersheds of the Hawaiian Islands") +
+  ggtitle("Watersheds of the Hawaiian Islands") +
   xlab("Longitude") +
   ylab("Latitude") +
   theme(panel.grid.major = element_line(color = "gray"(0.5), linetype = "dashed", size = 0.5),
@@ -71,5 +71,24 @@ ggplotly(water_map) %>%
   highlight(
     "plotly_hover",
     selected = attrs_selected(line = list(color = "black")))
+```
+
+This plot allows us to zoom in to each of the islands. But maybe proof of concept? Next, let's zoom in on just the main island
+```{r}
+library(scales)
+
+ggplot(data=water) +
+  geom_sf(aes(fill=`Watershed Area (sq m)`), size=0.1) +
+  scale_fill_paletteer_c("scico::hawaii", direction=-1, label=comma) +
+  coord_sf(xlim=c(-156.5, -154.5), ylim=c(18.7, 20.4)) + #zoom into big island
+  annotation_scale(location = "br", width_hint = 0.3) + #add a scale bar
+  annotation_north_arrow(location = "br", which_north = "true",
+                         pad_x = unit(0.3,"in"), pad_y = unit(0.3, "in"),
+                         style = north_arrow_fancy_orienteering) +
+  ggtitle("Watersheds of Hawaii, HI") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  theme(panel.grid.major = element_line(color = "gray"(0.5), linetype = "dashed", size = 0.5),
+        panel.background = element_rect(fill = "aliceblue"))
 ```
 
