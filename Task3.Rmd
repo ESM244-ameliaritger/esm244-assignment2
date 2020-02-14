@@ -1,0 +1,75 @@
+---
+title: "Task 3"
+author: "Amelia Ritger"
+date: "2/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+
+#load packages
+library(tidyverse)
+library(tidyverse)
+library(here)
+library(janitor)
+library(raster)
+library(sf)
+library(tmap)
+#library(tmaptools)
+library(gstat)
+
+library(plotly)
+library(paletteer)
+```
+
+My task?
+
+Make finalized map(s) in which I: 
+
+- Clearly and professionally show the different watersheds for all main Hawaiian islands, or for an island or region of my choosing
+
+Do you want your maps to be static or interactive?
+What areas do you want to focus on? 
+Do you want to show land use/landcover and watersheds in a single map or in separate maps? 
+Just make sure that your final outputs are presented in a nice professional HTML that you’d be proud to share with someone so that they can see your awesome spatial code! 
+
+Let's get cracking!
+
+Read in data
+```{r}
+water <- read_sf(here("Watersheds", "Watersheds.shp"))
+```
+
+Basically plot it
+```{r}
+plot(water)
+```
+
+Unfortunately, swma (water management area) doesn't look very interesting...
+"wuc" (watershed unit code text) and "huc" (watershed unit code numeric) also don't look too interesting
+
+Check on other map related things and map it!
+```{r}
+st_crs(water) #cool, EPSG is 4326, as it should be
+
+#Rename variable of interest in the name of good-looking maps
+water <- water %>% 
+  mutate(`Watershed Area (sq m)`= hucarea)
+
+water_map <- ggplot(data=water) +
+  geom_sf(aes(fill=`Watershed Area (sq m)`, color=`Watershed Area (sq m)`), show.legend = FALSE) +
+  scale_fill_paletteer_c("scico::hawaii", direction=-1) +
+  scale_color_paletteer_c("scico::hawaii", direction=-1) +
+  ggtitle("Map of the watersheds of the Hawaiian Islands") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  theme(panel.grid.major = element_line(color = "gray"(0.5), linetype = "dashed", size = 0.5),
+        panel.background = element_rect(fill = "aliceblue"))
+
+ggplotly(water_map) %>%
+  highlight(
+    "plotly_hover",
+    selected = attrs_selected(line = list(color = "black")))
+```
+
