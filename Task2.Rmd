@@ -9,7 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
 ```
 
-## Here's a useful and descriptive introductory summary!
 The Columbia River is a 2000km river that runs from British Columbia through Washington and Oregon. The Columbia Basin Research center runs the DART program (Data Access in Real Time), part of which collects data on fish passage through dams along the river. The Bonneville Dam is one such dam, and the steelhead trout is one such fish.
 
 ### Here's an image of the Bonneville Dam! 
@@ -56,10 +55,17 @@ fish <- raw_fish %>%
 ### Look at the data day-by-day (original time series observations)
 ```{r}
 fish_day <- ggplot(data=fish, aes(x=date, y=value)) +
-  geom_line()
+  geom_line() +
+  xlab("Date") +
+  ylab("Passage counts") +
+  theme_minimal()
 
 fish_day
 ```
+
+Fig 1. Daily counts of steelhead trout passage through the Bonneville dam from 1939 to 2019.
+
+Trout counts seem to peak seasonally, which makes sense given their annual migration patterns.
 
 Double check you did it right by looking at the first 1000 observations
 ```{r}
@@ -94,10 +100,15 @@ duplicates(fish, index=year_month)
 
 #plot tsibble fancy plots
 fish_ts %>% autoplot(value)
-fish_ts %>% gg_subseries(value)
+
+fish_ts %>% gg_subseries(value) +
+  #geom_line(aes(color=year)) +
+  xlab("Date") +
+  ylab("Passage counts") +
+  theme_minimal()
 ```
 
-Check out that sweet trout spawning season!
+Check out that sweet trout spawning season July-September! It appears that around 1950-1970, trout counts were down at times when we should've expected higher abundances. But those seem to be back to normal (and even showing historical highs around the 2000s).
 
 ```{r}
 #prep data frame for season plot
@@ -118,8 +129,17 @@ fish_summary_ts %>% gg_season(sums)
 
 #make the same season plot but now in ggplot
 ggplot(data=fish_summary, aes(x=month, y=sums, group=year)) +
-  geom_line(aes(color=year))
+  geom_line(aes(color=year)) +
+  scale_colour_gradientn(colours = c("red","turquoise","darkblue")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) + #remove scientific notation from y axis
+  xlab("Month") +
+  ylab("Passage counts") +
+  theme_minimal()
 ```
+
+Fig 2. Seasonal steelhead trout passage counts through the Bonneville Dam.
+
+It appears that trout counts are generally greater from 1980-2020 than from 1940-1980. And, of course, there is a peak in counts during the spawning season from July to September. 
 
 ### Visualize annual steelhead passage counts
 ```{r}
@@ -130,6 +150,13 @@ fish_annual <- fish_summary %>%
 
 #plot it
 ggplot(data=fish_annual, aes(x=year, y=sumsofsums)) +
-  geom_line()
+  geom_line() +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE)) + #remove scientific notation from y axis
+  xlab("Date") +
+  ylab("Passage counts") +
+  theme_bw()
 ```
 
+Fig 3. Annual steelhead trout passage counts through the Bonneville dam from 1939 to 2019. 
+
+From 1980 until 2010, it appears that counts were on the rise! But recently they've dropped off, hopefully the counts start going back up in the next few years...
